@@ -1,0 +1,16 @@
+version: '2'
+services:
+  webgoat:
+    image: webgoat/webgoat-8.0
+    ports:
+      - "8080:8080"
+    command: /home/webgoat/start.sh
+    environment:
+      WEBWOLF_HOST: webwolf
+  webwolf:
+    image: webgoat/webwolf
+    ports:
+      - "8081:8081"
+    depends_on:
+      - webgoat
+    command: /home/webwolf/run.sh

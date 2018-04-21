@@ -189,11 +189,11 @@ When an XML parser loads this document, it sees that it includes one root elemen
 
 ## Blind XXE 
 
-Assuming we are running WebGoat and WebWolf using our `docker-compose` setup then we upload the [`webwolf\attack.dtd`](webwolf\attack.dtd) file to WebWolf first and copy the link url.
+Assuming we are running WebGoat and WebWolf using our `docker-compose` setup then we upload the [`webwolf/attack.dtd`](./webwolf/attack.dtd) file to WebWolf first and copy the link url.
 
-Then in the comments hack example, use Burp Suite to intecept the request and repace with the follwoing XML payload (change the SYSTEM URL to your files URL).
+Then in the comments hack example, use Burp Suite to intecept the request and repace with the follwoing XML payload (change the SYSTEM URL to your 'attack.dtd' URL from WebWolf).
 
-This basically loads the remote DTD file and replaces the `%remotel` placeholder with the remote DTD. This is basically our 'attack.dtd' file which contains the entity 'ping'. We load this into the text element of the XML so that the parser executes it thus sending a request to our WebWolf server from WebGoat!
+This basically loads the remote DTD file and replaces the `%remote;` placeholder with the contents (the actual Entities) of the remote DTD. This is basically our 'attack.dtd' file which contains the entity 'ping'. We insert this into the text element of the XML so that the parser executes it thus sending a request to our WebWolf server from WebGoat!
 
 ```
 <?xml version="1.0"?>

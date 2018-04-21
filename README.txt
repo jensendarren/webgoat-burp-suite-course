@@ -110,6 +110,38 @@ Now we can subsitute the 'true' part with a valid SQL statement and test anythin
 
 It will take time but we now just simply follow standard blind SQLi techniques.
 
+## XXE Injection
+
+Entities in XML can be freely defined and parsers will subsitute the values where the entities are found in the XML.
+
+For example:
+
+```
+<?xml version="1.0" standalone="yes" ?>
+<!DOCTYPE author [
+  <!ELEMENT author (#PCDATA)>
+  <!ENTITY js "Jo Smith">
+]>
+<author>&js;</author>
+```
+
+So everywhere you use the entity `&js;` the parser will replace it with the value defined in the entity (so in the above example 'Jo Smith').
+
+So how could we exploit this? Answer is to use SYSTEM or [External Entitity Declarations](https://www.w3schools.com/xml/xml_dtd_entities.asp) and the [file URI scheme](https://en.wikipedia.org/wiki/File_URI_scheme)
+
+For example, using file URI to get the passwords on a server would look like this: `file:///etc/passwd`.
+
+If we create an External Entity in the XML and ask the parser to render that in the response XML we have a list of all passwords on the server!
+
+For example, imagine in a commenting application there was a form field to add a comment. Then intercept that using Burp Suite (for example), and replace the XML with the following. If you then refresh the browser page you will see the output of the `/etc/passwd` file in the comments stream!
+
+```
+<?xml version="1.0"?>
+<!DOCTYPE comment [  
+<!ELEMENT text ANY >
+<!ENTITY xxe SYSTEM "file:///etc/passwd" >]>
+<comment><text>&xxe;</text></comment>
+```
 
 
 

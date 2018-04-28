@@ -230,3 +230,31 @@ We can then load the remote DTD from WebWolf (using another parameter entitiy) a
   <text>test&upload;</text>
 </comment>
 ```
+
+## XSS Injection
+
+XSS (Cross-Site Scripting) is an attack approach for injecting JS into any web page. In extreme cases this could allow the attacker to gain access to the users web application account or even completely compromize the users browser and operating system!
+
+Here is a useful [XSS Injection cheat sheet](https://www.owasp.org/index.php/XSS_Filter_Evasion_Cheat_Sheet)
+
+Let's look at three types of XSS injection as follows:
+
+## Reflected XSS Injection
+
+This is where an attacker injects JavaScript into a form field or directly into the URL and that is then 'reflected' back to the browswer and executed.
+
+Start by submitting a 'test' string to see if any field appears to be compromized. The test string can be something like this: `!@#$<XSSTEST>[]()'"`
+
+## Stored XSS Injection
+
+This is where an attacker injects JavaScript into a form field or directly into the URL but in this case results in the injected JavaScript being saved into a server side database. For example this could be a commenting page where an attacker injects the JavaScript into a comment field, that is then saved to the database. 
+
+This is a pretty serious exploit since the JavaScript will then run for *every* subsequent visitor to that page who happens to render the exploted / injected comment.
+
+## Dom-Based XSS Injection
+
+This is also pretty serious in that the exploit happens on the client side only (the injected JavaScript is never sent to the server). This is typical of single page applications where all the application logic is essentially loaded into the client and a lot of interactions take place purly on the client side.
+
+A good example is a site that has a number of tabs. Click tab 1 reveals content for tab 2. Click tab 2 reveals content for tab 2 etc. There is no reqest made to the server since all the content is already loaded and JavaScript is managing the content to show depending on the tab that was clicked.
+
+There are several examples and tests in WebGoat to try out XSS! Have fun! :)
